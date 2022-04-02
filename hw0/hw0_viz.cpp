@@ -50,7 +50,8 @@ int main() {
 
 	// load robots
 	auto robot = new Sai2Model::Sai2Model(robot_file, false);
-	robot->_q << 0, 1.0, -0.4;
+	// robot->_q << 0, 1.0, -0.4;
+	robot->_q << 0, 1.0, -1.4;
 	robot->updateKinematics();
 	redis_client.setEigenMatrixJSON(JOINT_ANGLES_KEY, robot->_q);
 
