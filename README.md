@@ -26,3 +26,6 @@ When you run hw0 and modify the values for the joints, it will modify the positi
 ```
 redis_client.setEigenMatrixJSON(JOINT_ANGLES_KEY, robot->_q);
 ```
+
+### hw1
+./simviz_hw1 sets up the simulation, and ./hw1 runs your controller.
