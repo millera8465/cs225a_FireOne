@@ -11,6 +11,7 @@ using namespace Eigen;
 
 const string world_file = "./resources/world.urdf";
 const string robot_file = "./resources/rprbot.urdf";
+// const string robot_file = "./resources/rprpbot.urdf";
 const string robot_name = "RPRBot";
 const string camera_name = "camera_fixed";
 
@@ -47,6 +48,10 @@ int main() {
 	auto graphics = new Sai2Graphics::Sai2Graphics(world_file, true);
 	Eigen::Vector3d camera_pos, camera_lookat, camera_vertical;
 	graphics->getCameraPose(camera_name, camera_pos, camera_vertical, camera_lookat);
+	// graphics->showLinkFrame(true, robot_name, "base_link", 0.25);
+	// graphics->showLinkFrame(true, robot_name, "link0", 0.25);
+	// graphics->showLinkFrame(true, robot_name, "link1", 0.25);
+	// graphics->showLinkFrame(true, robot_name, "link2", 0.25);
 
 	// load robots
 	auto robot = new Sai2Model::Sai2Model(robot_file, false);
