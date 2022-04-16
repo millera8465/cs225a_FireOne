@@ -9,7 +9,6 @@
 #define QUESTION_2   2
 #define QUESTION_3   3
 #define QUESTION_4   4
-#define QUESTION_5   5
 
 // handle ctrl-c nicely
 #include <signal.h>
@@ -20,7 +19,7 @@ void sighandler(int sig)
 using namespace std;
 using namespace Eigen;
 
-const string robot_file = "./resources/panda_arm_controller.urdf";
+const string robot_file = "./resources/panda_arm.urdf";
 const string robot_name = "PANDA";
 
 // redis keys:
@@ -52,7 +51,20 @@ int main() {
 
 	// prepare controller
 	int dof = robot->dof();
+	const string link_name = "link7";
+	const Vector3d pos_in_link = Vector3d(0, 0, 0.1);
 	VectorXd command_torques = VectorXd::Zero(dof);
+
+	// model quantities for operational space control
+	MatrixXd Jv = MatrixXd::Zero(3,dof);
+	MatrixXd Lambda = MatrixXd::Zero(3,3);
+	MatrixXd J_bar = MatrixXd::Zero(dof,3);
+	MatrixXd N = MatrixXd::Zero(dof,dof);
+
+	robot->Jv(Jv, link_name, pos_in_link);
+	robot->taskInertiaMatrix(Lambda, Jv);
+	robot->dynConsistentInverseJacobian(J_bar, Jv);
+	robot->nullspaceMatrix(N, Jv);
 
 	// create a timer
 	LoopTimer timer;
@@ -81,12 +93,8 @@ int main() {
 		// ---------------------------  question 1 ---------------------------------------
 		if(controller_number == QUESTION_1)
 		{
-			double kp = 0.0;      // chose your p gain
-			double kv = 0.0;      // chose your d gain
 
-			VectorXd q_desired = initial_q;   // change to the desired robot joint angles for the question
-
-			command_torques.setZero();  // change to the control torques you compute
+			command_torques.setZero();  
 		}
 
 		// ---------------------------  question 2 ---------------------------------------
@@ -105,13 +113,6 @@ int main() {
 
 		// ---------------------------  question 4 ---------------------------------------
 		if(controller_number == QUESTION_4)
-		{
-
-			command_torques.setZero();
-		}
-
-		// ---------------------------  question 5 ---------------------------------------
-		if(controller_number == QUESTION_5)
 		{
 
 			command_torques.setZero();

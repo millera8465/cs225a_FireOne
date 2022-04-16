@@ -18,7 +18,7 @@ using namespace std;
 using namespace Eigen;
 
 const string world_file = "./resources/world.urdf";
-const string robot_file = "./resources/panda_arm_simulation.urdf";
+const string robot_file = "./resources/panda_arm.urdf";
 const string robot_name = "PANDA";
 const string camera_name = "camera_fixed";
 

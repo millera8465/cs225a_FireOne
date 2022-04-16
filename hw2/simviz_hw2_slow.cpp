@@ -18,7 +18,7 @@ using namespace std;
 using namespace Eigen;
 
 const string world_file = "./resources/world.urdf";
-const string robot_file = "./resources/panda_arm_simulation.urdf";
+const string robot_file = "./resources/panda_arm.urdf";
 const string robot_name = "PANDA";
 const string camera_name = "camera_fixed";
 
@@ -227,7 +227,7 @@ void simulation(Sai2Model::Sai2Model* robot, Simulation::Sai2Simulation* sim) {
 	// create a timer
 	LoopTimer timer;
 	timer.initializeTimer();
-	timer.setLoopFrequency(1000); 
+	timer.setLoopFrequency(200); 
 	double last_time = timer.elapsedTime(); //secs
 	bool fTimerDidSleep = true;
 
