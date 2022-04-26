@@ -127,7 +127,7 @@ int main(int argc, char* argv[]) {
 	else if(controller_number == QUESTION_2F)
 		filename = "../../hw3/data_files/question_2f.txt";
 	else if(controller_number == QUESTION_2G)
-		filename = "../../hw3data_files/question_2g.txt";
+		filename = "../../hw3/data_files/question_2g.txt";
 	else if(controller_number == QUESTION_3)
 		filename = "../../hw3/data_files/question_3.txt";
 	else if(controller_number == QUESTION_4A)
