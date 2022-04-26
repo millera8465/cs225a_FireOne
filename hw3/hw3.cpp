@@ -117,29 +117,29 @@ int main(int argc, char* argv[]) {
 
 	string filename;
 	if(controller_number == QUESTION_1A)
-		filename = "../../hw3_solution/data_files/question_1a.txt";
+		filename = "../../hw3/data_files/question_1a.txt";
 	else if(controller_number == QUESTION_1C)
-		filename = "../../hw3_solution/data_files/question_1c.txt";
+		filename = "../../hw3/data_files/question_1c.txt";
 	else if(controller_number == QUESTION_2D)
-		filename = "../../hw3_solution/data_files/question_2d.txt";
+		filename = "../../hw3/data_files/question_2d.txt";
 	else if(controller_number == QUESTION_2E)
-		filename = "../../hw3_solution/data_files/question_2e.txt";
+		filename = "../../hw3/data_files/question_2e.txt";
 	else if(controller_number == QUESTION_2F)
-		filename = "../../hw3_solution/data_files/question_2f.txt";
+		filename = "../../hw3/data_files/question_2f.txt";
 	else if(controller_number == QUESTION_2G)
-		filename = "../../hw3_solution/data_files/question_2g.txt";
+		filename = "../../hw3data_files/question_2g.txt";
 	else if(controller_number == QUESTION_3)
-		filename = "../../hw3_solution/data_files/question_3.txt";
+		filename = "../../hw3/data_files/question_3.txt";
 	else if(controller_number == QUESTION_4A)
-		filename = "../../hw3_solution/data_files/question_4a.txt";
+		filename = "../../hw3/data_files/question_4a.txt";
 	else if(controller_number == QUESTION_4B)
-		filename = "../../hw3_solution/data_files/question_4b.txt";
+		filename = "../../hw3/data_files/question_4b.txt";
 	else if(controller_number == QUESTION_5A)
-		filename = "../../hw3_solution/data_files/question_5a.txt";
+		filename = "../../hw3/data_files/question_5a.txt";
 	else if(controller_number == QUESTION_5B)
-		filename = "../../hw3_solution/data_files/question_5b.txt";
+		filename = "../../hw3/data_files/question_5b.txt";
 	else if(controller_number == QUESTION_5C)
-		filename = "../../hw3_solution/data_files/question_5c.txt";
+		filename = "../../hw3data_files/question_5c.txt";
 
 	ofstream data_file;
 	data_file.open(filename);
