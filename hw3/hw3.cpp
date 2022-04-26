@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
 	else if(controller_number == QUESTION_5B)
 		filename = "../../hw3/data_files/question_5b.txt";
 	else if(controller_number == QUESTION_5C)
-		filename = "../../hw3data_files/question_5c.txt";
+		filename = "../../hw3/data_files/question_5c.txt";
 
 	ofstream data_file;
 	data_file.open(filename);
