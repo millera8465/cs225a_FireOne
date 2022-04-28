@@ -100,8 +100,8 @@ int main(int argc, char* argv[]) {
 
 	// initialize force and moment on end-effector
 	Eigen::Vector3d force, moment;
-	force = redis_client.getEigenMatrixJSON(EE_FORCE_KEY);
-	moment = redis_client.getEigenMatrixJSON(EE_MOMENT_KEY);
+	// force = redis_client.getEigenMatrixJSON(EE_FORCE_KEY);
+	// moment = redis_client.getEigenMatrixJSON(EE_MOMENT_KEY);
 
 	// create a timer
 	LoopTimer timer;
@@ -158,8 +158,10 @@ int main(int argc, char* argv[]) {
 		robot->updateModel();
 
 		// read force sensor from redis
-		force = redis_client.getEigenMatrixJSON(EE_FORCE_KEY);
-		moment = redis_client.getEigenMatrixJSON(EE_MOMENT_KEY);
+		if(controller_number == QUESTION_5A || controller_number == QUESTION_5B || controller_number == QUESTION_5C) {
+			force = redis_client.getEigenMatrixJSON(EE_FORCE_KEY);
+			moment = redis_client.getEigenMatrixJSON(EE_MOMENT_KEY);
+		}
 
 		// **********************
 		// WRITE YOUR CODE AFTER
