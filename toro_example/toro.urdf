@@ -841,6 +841,12 @@
                 <!-- <sphere radius="0.01" /> -->
             </geometry>
         </visual>
+        <visual>
+            <origin xyz="0 0 0.1" rpy="0 0 0" />
+            <geometry>
+                <sphere radius="0.02" />
+            </geometry>
+        </visual>
         <!-- <visual> -->
             <!-- <origin  xyz="0 0 0.056"/> -->
             <!-- <origin xyz="0.0000000000 0.0560000000 0.0000000000" rpy="-1.5707963268  0.0000000000  0.0000000000" /> -->
@@ -1103,6 +1109,12 @@
             <geometry>
                 <box size="0.05 0.1 0.05"/>
                 <!-- <sphere radius="0.01" /> -->
+            </geometry>
+        </visual>
+        <visual>
+            <origin xyz="0 -0.1 0" rpy="0 0 0" />
+            <geometry>
+                <sphere radius="0.02" />
             </geometry>
         </visual>
         <!-- <visual> -->
