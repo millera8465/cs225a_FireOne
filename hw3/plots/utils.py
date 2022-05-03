@@ -2,12 +2,8 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import sys
-import math
-import os
 
 # To read text files and plot them
-
 
 # Get data from txt file, and return array
 def getData(dataDir):
@@ -75,6 +71,8 @@ def plotXYZ(namePlots, data, desiredData, time, data_label, data_des_label):
 def simpleSubplot(namePlot, data, time, data_label, lineType, legendLoc=(0.8,0.5)):
 
     numC = np.asarray(data).ndim
+    if numC != 1:
+        numC = data.shape[1]
 
     for i in range(numC):
         if numC == 1: namePlot.plot(time, data, lineType[i], label=data_label[i])
@@ -82,113 +80,3 @@ def simpleSubplot(namePlot, data, time, data_label, lineType, legendLoc=(0.8,0.5
 
     autoscale_axes(namePlot)
     lgd = namePlot.legend(loc=legendLoc,frameon=True)
-
-
-# # Get the current working directory
-# cwd = os.getcwd()
-
-# # Print the current working directory
-# print("Current working directory: {0}".format(cwd))
-
-# # data file to read 
-# file_name_5a = "../data_files/question_5a.txt"
-# data_5a = np.loadtxt(file_name_5a, skiprows=0)
-
-# file_name_5b = "../data_files/question_5b.txt"
-# data_5b = np.loadtxt(file_name_5b, skiprows=0)
-
-# file_name_5c = "../data_files/question_5c.txt"
-# data_5c = np.loadtxt(file_name_5c, skiprows=0)
-
-# # q3_dense = np.linspace(-90,90,251)
-# # q3 = (-90, -60, -30, 0, 30, 60, 90)
-
-# # d2_dense = np.linspace(0,2,251)
-# # d2 = (0, 0.5, 1, 1.5, 2)
-
-# # question e
-
-# time_1 = np.arange(np.shape(data_5a)[0])
-# time_1 = time_1/100
-# force = data_5a[:,0:3]
-
-# fig0 = plt.figure(0,figsize=(7,8))
-
-# fig0.add_subplot(311)
-# plt.plot(time_1, force[:,0], 'r', label=r'$F_{x}$')
-# # plt.title("Force x", FontSize=24)
-# # plt.ylim((-2.0,2.0))
-# # lgd = plt.legend(loc=(0.8,0.4),frameon=1)
-
-# fig0.add_subplot(312)
-# plt.plot(time_1, force[:,1], 'g', label=r'$F_{y}$')
-# # plt.ylabel('Force y', FontSize=18)
-# # plt.ylim((-0.2,0.1))
-# # lgd = plt.legend(loc=(0.8,0.2),frameon=1)
-
-# fig0.add_subplot(313)
-# plt.plot(time_1, force[:,2], 'b', label=r'$F_{z}$')
-# # plt.ylim((-2.26,-2.16))
-
-# plt.xlabel('Time')
-# fig0.tight_layout()
-# fig0.savefig('HW3_Q5a_force.png')
-
-# # plt.show()
-
-# # question e
-# time_1 = np.arange(np.shape(data_5b)[0])
-# time_1 = time_1/100
-# force = data_5b[:,0:3]
-
-# fig1 = plt.figure(1,figsize=(7,8))
-
-# fig1.add_subplot(311)
-# plt.plot(time_1, force[:,0], 'r', label=r'$F_{x}$')
-# # plt.title("Force x", FontSize=24)
-# # plt.ylim((-2.0,2.0))
-# # lgd = plt.legend(loc=(0.8,0.4),frameon=1)
-
-# fig1.add_subplot(312)
-# plt.plot(time_1, force[:,1], 'g', label=r'$F_{y}$')
-# # plt.ylabel('Force y', FontSize=18)
-# # plt.ylim((-0.2,0.1))
-# # lgd = plt.legend(loc=(0.8,0.2),frameon=1)
-
-# fig1.add_subplot(313)
-# plt.plot(time_1, force[:,2], 'b', label=r'$F_{z}$')
-# # plt.ylim((-2.26,-2.16))
-
-# plt.xlabel('Time')
-# fig1.tight_layout()
-# fig1.savefig('HW3_Q5b_force.png')
-
-# # question e
-# time_1 = np.arange(np.shape(data_5c)[0])
-# time_1 = time_1/100
-# force = data_5c[:,0:3]
-
-# fig2 = plt.figure(2,figsize=(7,8))
-
-# fig2.add_subplot(311)
-# plt.plot(time_1, force[:,0], 'r', label=r'$F_{x}$')
-# # plt.title("Force x", FontSize=24)
-# # plt.ylim((-2.0,2.0))
-# # lgd = plt.legend(loc=(0.8,0.4),frameon=1)
-
-# fig2.add_subplot(312)
-# plt.plot(time_1, force[:,1], 'g', label=r'$F_{y}$')
-# # plt.ylabel('Force y', FontSize=18)
-# # plt.ylim((-0.2,0.1))
-# # lgd = plt.legend(loc=(0.8,0.2),frameon=1)
-
-# fig2.add_subplot(313)
-# plt.plot(time_1, force[:,2], 'b', label=r'$F_{z}$')
-# # plt.ylim((-2.26,-2.16))
-
-# plt.xlabel('Time')
-# fig2.tight_layout()
-# fig2.savefig('HW3_Q5c_force.png')
-
-# # plt.show()
-
