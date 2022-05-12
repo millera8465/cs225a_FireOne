@@ -79,6 +79,7 @@ int main() {
 	Eigen::Vector3d camera_pos, camera_lookat, camera_vertical;
 	graphics->getCameraPose(camera_name, camera_pos, camera_vertical, camera_lookat);
 	graphics->_world->setBackgroundColor(66.0/255, 135.0/255, 245.0/255);  // set blue background 
+	// graphics->showLinkFrame(true, "toro", "", 0.25);
 
 	// load robots
 	auto robot = new Sai2Model::Sai2Model(robot_file, false);
@@ -309,7 +310,7 @@ void simulation(Sai2Model::Sai2Model* robot, Simulation::Sai2Simulation* sim, UI
 		ui_force_widget->getUIJointTorques(ui_force_command_torques);
 
 		if (fRobotLinkSelect)
-			sim->setJointTorques(robot_name, command_torques + ui_force_command_torques + g);
+			sim->setJointTorques(robot_name, command_torques + ui_force_command_torques + g - 1 * robot->_M * robot->_dq);
 		else
 			sim->setJointTorques(robot_name, command_torques + g);
 
