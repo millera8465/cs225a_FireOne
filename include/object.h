@@ -64,4 +64,30 @@ void addBox(Sai2Graphics::Sai2Graphics* graphics,
     graphics->_world->addChild(object);
 }
 
+void addMesh(Sai2Graphics::Sai2Graphics* graphics,
+                const string filename,
+                const Vector3d& pos,
+                const Quaterniond& ori,
+                const Vector3d& scale) {
+	auto tmp_mmesh = new chai3d::cMultiMesh();
+
+    if (false == chai3d::cLoadFileOBJ(tmp_mmesh, filename)) {
+        cerr << "Couldn't load obj/3ds robot link file: " << filename << endl;
+        abort();
+    }
+
+    tmp_mmesh->scaleXYZ(scale(0), scale(1), scale(2));
+
+    // set object position and rotation
+    tmp_mmesh->setLocalPos(chai3d::cVector3d(pos(0), pos(1), pos(2)));
+    { // brace temp variables to separate scope
+        Quaternion<double> tmp_q(ori.w(), ori.x(), ori.y(), ori.z());
+        chai3d::cMatrix3d tmp_cmat3; tmp_cmat3.copyfrom(tmp_q.toRotationMatrix());
+        tmp_mmesh->setLocalRot(tmp_cmat3);	
+    }
+
+    // add to world
+    graphics->_world->addChild(tmp_mmesh);
+}
+
 #endif

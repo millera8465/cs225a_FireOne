@@ -89,8 +89,8 @@ int main() {
 
 	// load robots
 	auto robot = new Sai2Model::Sai2Model(robot_file, false);
-	robot->_q = VectorXd::Zero(7);
-	robot->_dq = VectorXd::Zero(7);
+	// robot->_q = VectorXd::Zero(7);
+	// robot->_dq = VectorXd::Zero(7);
 	robot->updateModel();
 
 	// load simulation world
@@ -161,6 +161,10 @@ int main() {
 
 	// initialize glew
 	glewInitialize();
+
+	// add obj file once 
+	string mesh_filename = "../../model/test_objects/meshes/visual/cup.obj";
+	addMesh(graphics, mesh_filename, Vector3d(0.2, -0.2, 0), Quaterniond(1, 0, 0, 0), Vector3d(1, 1, 1));
 
 	// while window is open:
 	int count = 0;
