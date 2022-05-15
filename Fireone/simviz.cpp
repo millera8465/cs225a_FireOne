@@ -89,8 +89,8 @@ int main() {
 
 	// load robots
 	auto robot = new Sai2Model::Sai2Model(robot_file, false);
-	// robot->_q = VectorXd::Zero(7);
-	// robot->_dq = VectorXd::Zero(7);
+	robot->_q = VectorXd::Zero(17);
+	robot->_dq = VectorXd::Zero(17);
 	robot->updateModel();
 
 	// load simulation world
@@ -174,9 +174,9 @@ int main() {
 	{
 		// add sphere for every nth count
 		if (count % 60 == 0) {  // default refresh rate 
-			addSphere(graphics, "test", start_pos, Quaterniond(1, 0, 0, 0), 0.01, Vector4d(1, 1, 1, 1));
-			addBox(graphics, "test", start_pos + Vector3d(-2, 0, 0), Quaterniond(1, 0, 0, 0), Vector3d(0.05, 0.05, 0.05), Vector4d(1, 1, 1, 1));
-			start_pos(1) += 1e-1;
+			// addSphere(graphics, "test", start_pos, Quaterniond(1, 0, 0, 0), 0.01, Vector4d(1, 1, 1, 1));
+			// addBox(graphics, "test", start_pos + Vector3d(-2, 0, 0), Quaterniond(1, 0, 0, 0), Vector3d(0.05, 0.05, 0.05), Vector4d(1, 1, 1, 1));
+			// start_pos(1) += 1e-1;
 		}
 
 		// update graphics. this automatically waits for the correct amount of time

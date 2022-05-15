@@ -1,6 +1,32 @@
 <?xml version='1.0' encoding='utf-8'?>
 <robot name="panda">
 
+<!-- !!!!!!!!!!!!!!!changes from here!!!!!!!!!!!!!!!!!!! -->
+
+   <link name="ground">
+    <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="1e-9" />
+        <inertia ixx="1e-9" iyy="1e-9" izz="1e-9" ixy="0" ixz="0" iyz="0" />
+    </inertial>
+    </link>
+
+    <link name="floating_virtual1">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="1e-9" />
+            <inertia ixx="1e-9" iyy="1e-9" izz="1e-9" ixy="0" ixz="0" iyz="0" />
+        </inertial>
+    </link>
+    <link name="floating_virtual2">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="1e-9" />
+            <inertia ixx="1e-9" iyy="1e-9" izz="1e-9" ixy="0" ixz="0" iyz="0" />
+        </inertial>
+    </link>
+<!-- !!!!!!!!!!!!!!!changes end here!!!!!!!!!!!!!!!!!!! -->
+
     <link name="linkbase">
       <inertial>
         <origin xyz="0 0 0.0" rpy="0 0 0" />
@@ -9,7 +35,7 @@
       </inertial>
       <visual>
         <geometry>
-          <mesh filename="../../../model/MobileBase/meshes/visual/Mobile_Base_02.obj"/>
+          <mesh filename="../../../model/MobileBase/meshes/visual/Mobile_Base_03.obj"/>
         </geometry>
       </visual>
     </link>
@@ -264,9 +290,33 @@
       </visual>
     </link>
 
+   <joint name="floating_base_p1" type="prismatic">
+        <parent link="ground"/>
+        <child link="floating_virtual1"/>
+        <!-- <origin xyz="0.000000 0.000000 1.089000" rpy="0.000000 0.000000 0.000000" /> -->
+        <origin xyz="0.000000 0.000000 0.000000" rpy="0.000000 0.000000 0.000000" />
+        <axis xyz="1 0 0"/>
+        <limit lower="-2.8973" upper="2.9873" effort="87" velocity="2.1750" />
+    </joint>
+   <joint name="floating_base_p2" type="prismatic">
+        <parent link="floating_virtual1"/>
+        <child link="floating_virtual2"/>
+        <origin xyz="0.000000 0.000000 0.00000" rpy="0.000000 0.000000 0.000000" />
+        <axis xyz="0 1 0"/>
+        <limit lower="-2.8973" upper="2.9873" effort="87" velocity="2.1750" />
+    </joint>
+    <joint name="floating_base_r1" type="revolute">
+        <parent link="floating_virtual2"/>
+        <child link="linkbase"/>
+        <origin xyz="0.000000 0.000000 0.00000" rpy="0.000000 0.000000 1.57079632679" />
+        <axis xyz="0 0 1"/>
+        <calibration falling="0.0" />
+        <limit lower="-2.8973" upper="2.9873" effort="87" velocity="2.1750" />
+    </joint>
+
     <joint name="joint1r" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="0 0 -3.14159" xyz="0 -0.180389 0.83"/>
+      <origin rpy="0 0 -3.66519142919" xyz="0 -0.180389 0.83"/>
       <parent link="linkbase"/>
       <child link="link1r"/>
       <axis xyz="0 0 1"/>
@@ -275,7 +325,7 @@
     </joint>
      <joint name="joint2r" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-1.7628" soft_upper_limit="1.7628"/>
-      <origin rpy="-1.57079632679 0 0" xyz="0 0 0"/>
+      <origin rpy="-1.57079632679 -0.785000 0" xyz="0 0 0"/>
       <parent link="link1r"/>
       <child link="link2r"/>
       <axis xyz="0 0 1"/>
@@ -292,7 +342,7 @@
     </joint>
     <joint name="joint4r" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-3.0718" soft_upper_limit="-0.0698"/>
-      <origin rpy="1.57079632679 0 0" xyz="0.0825 0 0"/>
+      <origin rpy="1.57079632679 -0.52359877559 0" xyz="0.0825 0 0"/>
       <parent link="link3r"/>
       <child link="link4r"/>
       <axis xyz="0 0 1"/>
@@ -301,7 +351,7 @@
     </joint>
     <joint name="joint5r" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="-1.57079632679 0 0" xyz="-0.0825 0.384 0"/>
+      <origin rpy="-1.57079632679 -1.57079632679 0" xyz="-0.0825 0.384 0"/>
       <parent link="link4r"/>
       <child link="link5r"/>
       <axis xyz="0 0 1"/>
@@ -309,7 +359,7 @@
     </joint>
      <joint name="joint6r" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-0.0175" soft_upper_limit="3.7525"/>
-      <origin rpy="1.57079632679 0 3.14159" xyz="0 0 0"/>
+      <origin rpy="1.57079632679 5.23598775598 0" xyz="0 0 0"/>
       <parent link="link5r"/>
       <child link="link6r"/>
       <axis xyz="0 0 1"/>
@@ -318,7 +368,7 @@
     </joint>
     <joint name="joint7r" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="1.57079632679 0 0" xyz="0.088 0 0"/>
+      <origin rpy="1.57079632679 0.78539816339 0" xyz="0.088 0 0"/>
       <parent link="link6r"/>
       <child link="link7r"/>
       <axis xyz="0 0 1"/>
@@ -327,7 +377,7 @@
 
     <joint name="joint1" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="0 0 0" xyz="0 0.180389 0.83"/>
+      <origin rpy="0 0 0.52359877559" xyz="0 0.180389 0.83"/>
       <parent link="linkbase"/>
       <child link="link1"/>
       <axis xyz="0 0 1"/>
@@ -336,7 +386,7 @@
     </joint>
     <joint name="joint2" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-1.7628" soft_upper_limit="1.7628"/>
-      <origin rpy="-1.57079632679 0 0" xyz="0 0 0"/>
+      <origin rpy="-1.57079632679 0.785000 0" xyz="0 0 0"/>
       <parent link="link1"/>
       <child link="link2"/>
       <axis xyz="0 0 1"/>
@@ -345,7 +395,7 @@
     </joint>
     <joint name="joint3" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="1.57079632679 0 0" xyz="0 -0.316 0"/>
+      <origin rpy="1.57079632679 3.14159265359 0" xyz="0 -0.316 0"/>
       <parent link="link2"/>
       <child link="link3"/>
       <axis xyz="0 0 1"/>
@@ -353,7 +403,7 @@
     </joint>
     <joint name="joint4" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-3.0718" soft_upper_limit="-0.0698"/>
-      <origin rpy="1.57079632679 0 0" xyz="0.0825 0 0"/>
+      <origin rpy="1.57079632679 -0.52359877559 0" xyz="0.0825 0 0"/>
       <parent link="link3"/>
       <child link="link4"/>
       <axis xyz="0 0 1"/>
@@ -362,7 +412,7 @@
     </joint>
     <joint name="joint5" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="-1.57079632679 0 0" xyz="-0.0825 0.384 0"/>
+      <origin rpy="-1.57079632679 -1.57079632679 0" xyz="-0.0825 0.384 0"/>
       <parent link="link4"/>
       <child link="link5"/>
       <axis xyz="0 0 1"/>
@@ -370,7 +420,7 @@
     </joint>
     <joint name="joint6" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-0.0175" soft_upper_limit="3.7525"/>
-      <origin rpy="1.57079632679 0 0" xyz="0 0 0"/>
+      <origin rpy="1.57079632679 -1.0471975512 3.14159" xyz="0 0 0"/>
       <parent link="link5"/>
       <child link="link6"/>
       <axis xyz="0 0 1"/>
@@ -379,79 +429,10 @@
     </joint>
     <joint name="joint7" type="revolute">
       <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="1.57079632679 0 0" xyz="0.088 0 0"/>
+      <origin rpy="1.57079632679 0.78539816339 0" xyz="0.088 0 0"/>
       <parent link="link6"/>
       <child link="link7"/>
       <axis xyz="0 0 1"/>
       <limit effort="12" lower="-2.8973" upper="2.8973" velocity="2.6100"/>
     </joint>
-   <!-- <joint name="joint0r" type="revolute">
-      <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="0 0 0" xyz="0 0 0.333"/>
-      <parent link="linkbase"/>
-      <child link="link0r"/>
-      <axis xyz="0 0 1"/>
-      <calibration falling="-80.0" />
-      <limit effort="87" lower="-2.8973" upper="2.8973" velocity="2.1750"/>
-    </joint>
-    <joint name="joint1r" type="revolute">
-      <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="0 0 3.14159" xyz="0 -0.180389 0.473"/>
-      <parent link="link0r"/>
-      <child link="link1r"/>
-      <axis xyz="0 0 1"/>
-      <calibration falling="-80.0" />
-      <limit effort="87" lower="-2.8973" upper="2.8973" velocity="2.1750"/>
-    </joint>
-    <joint name="joint2r" type="revolute">
-      <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-1.7628" soft_upper_limit="1.7628"/>
-      <origin rpy="-1.57079632679 0 0" xyz="0 0 0"/>
-      <parent link="link1r"/>
-      <child link="link2r"/>
-      <axis xyz="0 0 1"/>
-      <calibration falling="-45.0" />
-      <limit effort="87" lower="-1.7628" upper="1.7628" velocity="2.1750"/>
-    </joint>
-    <joint name="joint3r" type="revolute">
-      <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="1.57079632679 0 0" xyz="0 -0.316 0"/>
-      <parent link="link2r"/>
-      <child link="link3r"/>
-      <axis xyz="0 0 1"/>
-      <limit effort="87" lower="-2.8973" upper="2.8973" velocity="2.1750"/>
-    </joint>
-    <joint name="joint4r" type="revolute">
-      <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-3.0718" soft_upper_limit="-0.0698"/>
-      <origin rpy="1.57079632679 0 0" xyz="0.0825 0 0"/>
-      <parent link="link3r"/>
-      <child link="link4r"/>
-      <axis xyz="0 0 1"/>
-      <calibration falling="-125.0" />
-      <limit effort="87" lower="-3.0718" upper="-0.0698" velocity="2.1750"/>
-    </joint>
-    <joint name="joint5r" type="revolute">
-      <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="-1.57079632679 0 0" xyz="-0.0825 0.384 0"/>
-      <parent link="link4r"/>
-      <child link="link5r"/>
-      <axis xyz="0 0 1"/>
-      <limit effort="12" lower="-2.8973" upper="2.8973" velocity="2.6100"/>
-    </joint>
-    <joint name="joint6r" type="revolute">
-      <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-0.0175" soft_upper_limit="3.7525"/>
-      <origin rpy="1.57079632679 0 0" xyz="0 0 0"/>
-      <parent link="link5r"/>
-      <child link="link6r"/>
-      <axis xyz="0 0 1"/>
-      <calibration falling="80.0" />
-      <limit effort="12" lower="-0.0175" upper="3.7525" velocity="2.6100"/>
-    </joint>
-    <joint name="joint7r" type="revolute">
-      <safety_controller k_position="100.0" k_velocity="40.0" soft_lower_limit="-2.8973" soft_upper_limit="2.8973"/>
-      <origin rpy="1.57079632679 0 0" xyz="0.088 0 0"/>
-      <parent link="link6r"/>
-      <child link="link7r"/>
-      <axis xyz="0 0 1"/>
-      <limit effort="12" lower="-2.8973" upper="2.8973" velocity="2.6100"/>
-    </joint> -->
 </robot>
