@@ -13,6 +13,10 @@
 #include "timer/LoopTimer.h"
 #include <GLFW/glfw3.h>  // must be loaded after loading opengl/glew
 #include <signal.h>
+#include <list>
+#include <chrono>
+#include <math.h>  
+
 
 bool fSimulationRunning = false;
 void sighandler(int){fSimulationRunning = false;}
@@ -23,12 +27,24 @@ void sighandler(int){fSimulationRunning = false;}
 using namespace std;
 using namespace Eigen;
 
+struct Fire {
+
+	Vector3d startingPosition;
+	Vector3d startingDim;
+	Vector3d dim;
+
+	Fire(Vector3d fireStartingPosition, Vector3d fireStartingDim, Vector3d fireDim):
+	startingPosition(fireStartingPosition), startingDim(fireStartingDim), dim(fireDim) 
+	{
+	}
+};
+
 // specify urdf and robots 
 const string world_file = "./resources/world.urdf";
 const string robot_file = "./resources/panda_arm.urdf";
 const string robot_name = "panda";
 const string camera_name = "camera_fixed";
-const string base_link_name = "link0";
+const string base_link_name = "linkbase";
 const string ee_link_name = "link7";
 
 // dynamic objects information
@@ -41,6 +57,7 @@ const int n_objects = object_names.size();
 
 // redis client 
 RedisClient redis_client; 
+RedisClient graphics_redis;
 
 // simulation thread
 void simulation(Sai2Model::Sai2Model* robot, Simulation::Sai2Simulation* sim);
@@ -56,6 +73,13 @@ void keySelect(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 // callback when a mouse button is pressed
 void mouseClick(GLFWwindow* window, int button, int action, int mods);
+
+void startFire(Sai2Graphics::Sai2Graphics* graphics, const string& name, const Vector3d& fireStartingPosition, const Vector3d& fireDim);
+
+void updateFire(Sai2Graphics::Sai2Graphics* graphics, const string& name, const Vector3d& fireStartingPosition, const Vector3d& fireDim);
+
+void startFires(Sai2Graphics::Sai2Graphics* graphics, const string& name, const std::list<Fire>& firesList);
+void updateFires(Sai2Graphics::Sai2Graphics* graphics, const string& name, const std::list<Fire>& firesList);
 
 // flags for scene camera movement
 bool fTransXp = false;
@@ -73,6 +97,10 @@ int main() {
 	// start redis client
 	redis_client = RedisClient();
 	redis_client.connect();
+
+	// start redis client for graphics
+	graphics_redis = RedisClient();
+	graphics_redis.connect();
 
 	// set up signal handler
 	signal(SIGABRT, &sighandler);
@@ -162,21 +190,55 @@ int main() {
 	// initialize glew
 	glewInitialize();
 
-	// add obj file once 
-	string mesh_filename = "../../model/test_objects/meshes/visual/cup.obj";
-	addMesh(graphics, mesh_filename, Vector3d(0.2, -0.2, 0), Quaterniond(1, 0, 0, 0), Vector3d(1, 1, 1));
-
 	// while window is open:
 	int count = 0;
-	Vector3d start_pos = Vector3d(1, -1, 1);
+	Vector3d fireStartingPosition = Vector3d(-4.0, 4.0, 0);
+	
+
+	double fireLength = 0.05; // hardcoded
+	double fireWidth = 0.05; // hardcoded
+
+	Vector3d fireStartingDim = Vector3d(fireLength, fireWidth, 0.1);
+	Vector3d fireDim = Vector3d(fireLength, fireWidth, 0.1);
+	//startFire(graphics, "fire",fireStartingPosition, fireStartingDim);
+
+	//------------------------------------------------------------------------------
+
+	/*std::list<Fire> firesList = { Fire(Vector3d(-4.0, 4.0, 0), Vector3d(fireLength, fireWidth, 0.1), Vector3d(fireLength, fireWidth, 0.1)),
+								Fire(Vector3d(-4.0, -4.0, 0), Vector3d(fireLength, fireWidth, 0.1), Vector3d(fireLength, fireWidth, 0.1)),
+								Fire(Vector3d(4.0, -4.0, 0), Vector3d(fireLength, fireWidth, 0.1), Vector3d(fireLength, fireWidth, 0.1))//,
+								Fire(Vector3d(4.0, 4.0, 0), Vector3d(fireLength, fireWidth, 0.1), Vector3d(fireLength, fireWidth, 0.1))
+								};*/
+
+
+	std::list<Fire> firesList = { Fire(Vector3d(4.0, 4.0, 0), Vector3d(fireLength, fireWidth, 0.1), Vector3d(fireLength, fireWidth, 0.1)),
+								// Fire(Vector3d(4.0, -4.0, 0), Vector3d(fireLength, fireWidth, 0.1), Vector3d(fireLength, fireWidth, 0.1)),
+								Fire(Vector3d(-4.0, -4.0, 0), Vector3d(fireLength, fireWidth, 0.1), Vector3d(fireLength, fireWidth, 0.1))
+								//, Fire(Vector3d(-4.0, 4.0, 0), Vector3d(fireLength, fireWidth, 0.1), Vector3d(fireLength, fireWidth, 0.1))
+								};
+
+	startFires(graphics, "fire",firesList);
+	auto start = std::chrono::high_resolution_clock::now();
+	//------------------------------------------------------------------------------
+
 
 	while (!glfwWindowShouldClose(window) && fSimulationRunning)
 	{
-		// add sphere for every nth count
-		if (count % 60 == 0) {  // default refresh rate 
-			// addSphere(graphics, "test", start_pos, Quaterniond(1, 0, 0, 0), 0.01, Vector4d(1, 1, 1, 1));
-			// addBox(graphics, "test", start_pos + Vector3d(-2, 0, 0), Quaterniond(1, 0, 0, 0), Vector3d(0.05, 0.05, 0.05), Vector4d(1, 1, 1, 1));
-			// start_pos(1) += 1e-1;
+
+
+		// increase fire for every nth count
+		//if (count % 10 == 0) {  // default refresh rate 
+		auto timeNow = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<float> duration = timeNow -start;
+		if (duration.count() >= 1.0) {
+			//updateFire(graphics, "fire", fireStartingPosition, fireDim);
+			updateFires(graphics, "fire", firesList);
+			//redis_client.setEigenMatrixJSON(FIRE_INFO_KEY, Vector4d::Random());
+			//auto end = std::chrono::high_resolution_clock::now();
+			//std::chrono::duration<float> duration = end -start;
+			std::cout << duration.count() << " s" << std::endl;
+			start = std::chrono::high_resolution_clock::now();
+
 		}
 
 		// update graphics. this automatically waits for the correct amount of time
@@ -278,6 +340,7 @@ int main() {
 
 void simulation(Sai2Model::Sai2Model* robot, Simulation::Sai2Simulation* sim)
 {
+
 	// prepare simulation
 	int dof = robot->dof();
 	VectorXd command_torques = VectorXd::Zero(dof);
@@ -442,3 +505,179 @@ void mouseClick(GLFWwindow* window, int button, int action, int mods) {
 	}
 }
 
+//------------------------------------------------------------------------------
+void startFire(Sai2Graphics::Sai2Graphics* graphics,
+                const string& name,
+                const Vector3d& fireStartingPosition,
+                const Vector3d& fireDim) {
+	increaseRectangularFire(graphics, name,fireStartingPosition, Quaterniond(1, 0, 0, 0), fireDim, Vector4d(1, 0, 0, 1));
+}
+
+//------------------------------------------------------------------------------
+void updateFire(Sai2Graphics::Sai2Graphics* graphics,
+                const string& name,
+                const Vector3d& fireStartingPosition,
+                const Vector3d& fireDim) {
+
+	double roomLength = 10.0; // hardcoded
+	double roomWidth = 10.0; // hardcoded
+	double fireLength = 0.05; // hardcoded
+	double fireWidth = 0.05; // hardcoded
+	double increaseFireLength = 1e-1; // hardcoded
+	double increaseFireWidth = 1e-1; // hardcoded
+	int case1 = 0;
+	int case2 = 0;
+	int case3 = 0;
+	int case4 = 0;
+
+	Vector3d& _fireStartingPosition = const_cast<Vector3d&>(fireStartingPosition);
+	Vector3d& _fireDim = const_cast<Vector3d&>(fireDim);
+
+	removeFire(graphics);
+
+
+	// Fire collision with the right wall
+	if (_fireStartingPosition(0) + _fireDim(0)/2 + increaseFireLength/2 > roomLength/2) {
+		case1 = 1;
+		//cout << "Case 1"<< endl;
+	}
+	// Fire collision with the left wall
+	if(_fireStartingPosition(0) - _fireDim(0)/2 - increaseFireLength/2 < -roomLength/2) {
+		case2 = 1;
+		//cout << "Case 2"<< endl;
+	}
+	// Fire collision with the front wall
+	if (_fireStartingPosition(1) + _fireDim(1)/2 + increaseFireWidth/2 > roomWidth/2) {
+		case3 = 1;
+		//cout << "Case 3"<< endl;
+	}
+	// Fire collision with the back wall
+	if(_fireStartingPosition(1) - _fireDim(1)/2 - increaseFireWidth/2 < -roomWidth/2) {
+		case4 = 1;
+		//cout << "Case 4"<< endl;
+	}
+	_fireStartingPosition(0) = _fireStartingPosition(0) - case1*increaseFireLength/2 + case2*increaseFireLength/2;
+	_fireStartingPosition(1) = _fireStartingPosition(1) - case3*increaseFireWidth/2 + case4*increaseFireWidth/2;
+	_fireDim = Vector3d((2-case1-case2)*increaseFireWidth/2, (2-case3-case4)*increaseFireLength/2, 0) + _fireDim;
+	increaseRectangularFire(graphics, "fire", _fireStartingPosition, Quaterniond(1, 0, 0, 0), _fireDim, Vector4d(1, 0, 0, 1));
+	
+}
+
+
+
+//------------------------------------------------------------------------------
+void startFires(Sai2Graphics::Sai2Graphics* graphics,
+                const string& name,
+                const std::list<Fire>& firesList) {
+
+	//Create an iterator of std::list
+	//std::list<Fire>::iterator it;
+
+	// Make iterate point to begining and incerement it one by one till it reaches the end of list.
+	//int num = 1;
+	/*for (it = firesList.begin(); it != firesList.end(); it++)
+	{
+	    // Access the object through iterator
+	    Vector3d startingPosition = it->startingPosition;
+		//Vector3d startingDim = it->startingDim;
+		Vector3d dim = it->dim;
+		std::string _name = name;
+		_name += std::to_string(num);   
+		addFireToList(_name, startingPosition, Quaterniond(1, 0, 0, 0), dim, Vector4d(1, 0, 0, 1));
+		num = num + 1;
+	}*/
+	int num = 1;
+	for (const Fire & fire : firesList)
+	{
+    	// Access the object through iterator
+	    Vector3d startingPosition = fire.startingPosition;
+		//Vector3d startingDim = it->startingDim;
+		Vector3d dim = fire.dim;
+		std::string _name = name;
+		_name += std::to_string(num);   
+		addFireToList(_name, startingPosition, Quaterniond(1, 0, 0, 0), dim, Vector4d(1, 0, 0, 1));
+		num = num + 1;
+	}
+
+	loadFiresToScene(graphics);
+}
+
+//------------------------------------------------------------------------------
+void updateFires(Sai2Graphics::Sai2Graphics* graphics,
+				const string& name,
+				const std::list<Fire>& firesList) {
+
+	double roomLength = 10.0; // hardcoded
+	double roomWidth = 10.0; // hardcoded
+	double fireLength = 0.05; // hardcoded
+	double fireWidth = 0.05; // hardcoded
+	double increaseFireLength = 1e-1; // hardcoded
+	double increaseFireWidth = 1e-1; // hardcoded
+	int case1 = 0;
+	int case2 = 0;
+	int case3 = 0;
+	int case4 = 0;
+
+	std::list<Fire>& _firesList = const_cast<std::list<Fire>&>(firesList);	
+
+	removeFires(graphics);
+
+	MatrixXd firesInfo = MatrixXd::Zero(_firesList.size(), 4);
+
+	int num = 1;
+	for (const Fire & fire : _firesList)
+	{
+		case1 = 0;
+		case2 = 0;
+		case3 = 0;
+		case4 = 0;
+
+		Fire& _fire = const_cast<Fire&>(fire);
+		// Fire collision with the right wall
+		if (_fire.startingPosition(0) + _fire.dim(0)/2 + increaseFireLength/2 > roomLength/2) {
+			case1 = 1;
+			//cout << "Case 1"<< endl;
+		}
+		// Fire collision with the left wall
+		if(_fire.startingPosition(0) - _fire.dim(0)/2 - increaseFireLength/2 < -roomLength/2) {
+			case2 = 1;
+			//cout << "Case 2"<< endl;
+		}
+		// Fire collision with the front wall
+		if (_fire.startingPosition(1) + _fire.dim(1)/2 + increaseFireWidth/2 > roomWidth/2) {
+			case3 = 1;
+			//cout << "Case 3"<< endl;
+		}
+		// Fire collision with the back wall
+		if(_fire.startingPosition(1) - _fire.dim(1)/2 - increaseFireWidth/2 < -roomWidth/2) {
+			case4 = 1;
+			//cout << "Case 4"<< endl;
+		}
+
+		_fire.startingPosition(0) = _fire.startingPosition(0) - case1*increaseFireLength/2 + case2*increaseFireLength/2;
+		_fire.startingPosition(1) = _fire.startingPosition(1) - case3*increaseFireWidth/2 + case4*increaseFireWidth/2;
+		_fire.dim = Vector3d((2-case1-case2)*increaseFireWidth/2, (2-case3-case4)*increaseFireLength/2, 0) + _fire.dim;
+
+		std::string _name = name;
+		_name += std::to_string(num);   
+		addFireToList(_name, _fire.startingPosition, Quaterniond(1, 0, 0, 0), _fire.dim, Vector4d(1, 0, 0, 1));
+
+		//double radius = sqrt(pow(_fire.startingPosition(0) - _fire.dim(0), 2) + pow(_fire.startingPosition(1) - _fire.dim(1), 2));
+		double radius = sqrt(pow(_fire.dim(0), 2) + pow(_fire.dim(1), 2));
+		firesInfo.row(num - 1) << _fire.startingPosition(0), _fire.startingPosition(1), _fire.startingPosition(2),radius;
+
+		num = num + 1;
+	}
+
+	// Send message through redis
+	//redis_client.setEigenMatrixJSON(FIRE_INFO_KEY, Vector4d(1, 0, 0, 1));
+	//redis_client.setEigenMatrixJSON(FIRE_INFO_KEY, Vector4d::Random());
+	//redis_client.setEigenMatrixJSON(FIRE_INFO_KEY, firesInfo);
+	graphics_redis.setEigenMatrixJSON(FIRE_INFO_KEY, firesInfo);
+	std::cout << firesInfo << std::endl;
+	// execute redis write callback
+	//redis_client.executeWriteCallback(0);	
+
+	loadFiresToScene(graphics);
+
+}

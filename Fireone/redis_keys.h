@@ -9,3 +9,5 @@ const std::string JOINT_VELOCITIES_KEY = "sai2::sim::panda::sensors::dq";
 const std::string JOINT_TORQUES_COMMANDED_KEY = "sai2::sim::panda::actuators::fgc";
 const std::string CONTROLLER_RUNNING_KEY = "sai2::sim::panda::controller";
 
+const std::string FIRE_INFO_KEY = "sai2::sim::panda::fire";
+

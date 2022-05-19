@@ -11,6 +11,7 @@
 
 #include <iostream>
 #include <string>
+#include <math.h>
 
 using namespace std;
 using namespace Eigen;
@@ -26,16 +27,27 @@ void sighandler(int){runloop = false;}
 // Location of URDF files specifying world and robot information
 const string robot_file = "./resources/panda_arm.urdf";
 
+//state machine will be added later
 enum State 
 {
 	POSTURE = 0, 
 	MOTION
 };
 
+// helper function 
+double sat(double x) {
+	if (abs(x) <= 1.0) {
+		return x;
+	}
+	else {
+		return signbit(x);
+	}
+}
+
 int main() {
 
-	// initial state 
-	int state = POSTURE;
+	 // initial state 
+	int state = MOTION;
 	string controller_status = "1";
 	
 	// start redis client
@@ -51,12 +63,18 @@ int main() {
 	auto robot = new Sai2Model::Sai2Model(robot_file, false);
 	robot->_q = redis_client.getEigenMatrixJSON(JOINT_ANGLES_KEY);
 	robot->_dq = redis_client.getEigenMatrixJSON(JOINT_VELOCITIES_KEY);
+	
+	int dof = robot->dof();
+	VectorXd initial_q = VectorXd::Zero(dof);
+	initial_q = robot->_q;
 	robot->updateModel();
 
+
 	// prepare controller
-	int dof = robot->dof();
 	VectorXd command_torques = VectorXd::Zero(dof);
 	MatrixXd N_prec = MatrixXd::Identity(dof, dof);
+	
+
 
 	// pose task
 	const string control_link = "link7";
@@ -80,10 +98,16 @@ int main() {
 	joint_task->_kp = 100.0;
 	joint_task->_kv = 20.0;
 
-	VectorXd q_init_desired(dof);
-	q_init_desired << -30.0, -15.0, -15.0, -105.0, 0.0, 90.0, 45.0;
-	q_init_desired *= M_PI/180.0;
-	joint_task->_desired_position = q_init_desired;
+	VectorXd q_d(dof);
+	q_d = initial_q;
+	q_d(0) = 8;
+	q_d(1) = 8;
+	
+	q_d(2) = -0.78539816339;
+
+	// 0.25*180/M_PI, 30.0,-30.0, -15.0, -15.0, -105.0, 0.0, 90.0, 45.0, -30.0, -15.0, -15.0, -105.0, 0.0, 90.0, 45.0;
+	// q_init_desired *= M_PI/180.0;
+	// joint_task->_desired_position = q_d;
 
 	// containers
 	Vector3d ee_pos;
@@ -116,14 +140,31 @@ int main() {
 		// wait for next scheduled loop
 		timer.waitForNextLoop();
 		double time = timer.elapsedTime() - start_time;
-
+		VectorXd dq_d = VectorXd::Zero(dof);
+		double nu, lu;
+		double Vmax = 0.5;
+		double Omax = 0.1;
+		double kpj = 400; //set kpj
+		double kvj = 80; //set kvj
 		// execute redis read callback
 		redis_client.executeReadCallback(0);
 
 		// update model
 		robot->updateModel();
-	
-		if (state == POSTURE) {
+		
+		// cout << state <<endl; //for state detection in display
+		dq_d = kpj/kvj*(q_d-robot->_q);// calculate dx_d
+		nu = sat(Vmax/sqrt(pow(dq_d.coeff(0), 2) + pow(dq_d.coeff(1), 2)));
+		lu = sat(Omax/abs(dq_d.coeff(2))); //defining lu for angular velocity saturation
+		MatrixXd su = MatrixXd::Zero(dof, dof);
+		su(0,0)=nu;
+		su(1,1)=nu;
+		su(2,2)=lu;
+
+		command_torques = robot->_M*(-80*(robot->_dq-su*dq_d));
+		// command_torques = -(80*robot->_dq) - 400*(robot->_q - q_init_desired);
+
+		/* if (state == POSTURE) {
 			// update task model and set hierarchy
 			N_prec.setIdentity();
 			joint_task->updateTaskModel(N_prec);
@@ -155,6 +196,7 @@ int main() {
 			joint_task->computeTorques(joint_task_torques);
 			command_torques = posori_task_torques + joint_task_torques;
 		}
+		*/
 
 		// execute redis write callback
 		redis_client.executeWriteCallback(0);	
