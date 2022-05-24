@@ -30,8 +30,8 @@ const string robot_file = "./resources/panda_arm.urdf";
 //state machine will be added later
 enum State 
 {
-	POSTURE = 0, 
-	MOTION
+	MOVING_DOWN = 0, 
+	SQUEEZE
 };
 
 // helper function 
@@ -47,7 +47,7 @@ double sat(double x) {
 int main() {
 
 	 // initial state 
-	int state = MOTION;
+	int state = MOVING_DOWN;
 	string controller_status = "1";
 	
 	// start redis client
@@ -74,23 +74,63 @@ int main() {
 	VectorXd command_torques = VectorXd::Zero(dof);
 	MatrixXd N_prec = MatrixXd::Identity(dof, dof);
 	
+	Vector3d x_pos;
+	Matrix3d x_ori;
+
+// pose task for left hand
+	std::string control_link = "link7";
+	Vector3d control_point = Vector3d(0, 0.0, 0.17);
+	auto posori_task_left_hand = new Sai2Primitives::PosOriTask(robot, control_link, control_point);
+	posori_task_left_hand->setDynamicDecouplingFull();
+
+	posori_task_left_hand->_use_interpolation_flag = true;
+	posori_task_left_hand->_use_velocity_saturation_flag = true;
+
+	
+	VectorXd posori_task_torques_left_hand = VectorXd::Zero(dof);
+	posori_task_left_hand->_kp_pos = 200.0;
+	posori_task_left_hand->_kv_pos = 20.0;
+	posori_task_left_hand->_kp_ori = 200.0;
+	posori_task_left_hand->_kv_ori = 20.0;
+
+	// set two goal positions/orientations 
+	robot->position(x_pos, control_link, control_point);
+	robot->rotation(x_ori, control_link);
+	posori_task_left_hand->_desired_position = x_pos + Vector3d(0.0, 0.0, -0.8);
+	posori_task_left_hand->_desired_orientation = x_ori; 
+	
 
 
-	// pose task
-	const string control_link = "link7";
-	const Vector3d control_point = Vector3d(0, 0, 0.07);
-	auto posori_task = new Sai2Primitives::PosOriTask(robot, control_link, control_point);
-	posori_task->_use_interpolation_flag = true;
-	posori_task->_use_velocity_saturation_flag = true;
 
-	VectorXd posori_task_torques = VectorXd::Zero(dof);
-	posori_task->_kp_pos = 100.0;
-	posori_task->_kv_pos = 20.0;
-	posori_task->_kp_ori = 100.0;
-	posori_task->_kv_ori = 20.0;
+
+// pose task for right hand 
+	control_link = "link7r";
+	auto posori_task_right_hand = new Sai2Primitives::PosOriTask(robot, control_link, control_point);
+	posori_task_right_hand->setDynamicDecouplingFull();
+
+	posori_task_right_hand->_use_interpolation_flag = true;
+	posori_task_right_hand->_use_velocity_saturation_flag = true;
+
+	
+	VectorXd posori_task_torques_right_hand = VectorXd::Zero(dof);
+	posori_task_right_hand->_kp_pos = 200.0;
+	posori_task_right_hand->_kv_pos = 20.0;
+	posori_task_right_hand->_kp_ori = 200.0;
+	posori_task_right_hand->_kv_ori = 20.0;
+
+
+	// set two goal positions/orientations 
+	robot->position(x_pos, control_link, control_point);
+	robot->rotation(x_ori, control_link);
+	posori_task_right_hand->_desired_position = x_pos + Vector3d(0.0, 0.0, -0.8);
+	posori_task_right_hand->_desired_orientation = x_ori; 
+
+
+
 
 	// joint task
 	auto joint_task = new Sai2Primitives::JointTask(robot);
+
 	joint_task->_use_interpolation_flag = true;
 	joint_task->_use_velocity_saturation_flag = true;
 
@@ -98,6 +138,11 @@ int main() {
 	joint_task->_kp = 100.0;
 	joint_task->_kv = 20.0;
 
+	// set desired joint posture to be the initial robot configuration
+	VectorXd q_init_desired = robot->_q;
+	joint_task->_desired_position = q_init_desired;
+
+	// Moving Base 
 	VectorXd q_d(dof);
 	q_d = initial_q;
 	q_d(0) = 8;
@@ -140,17 +185,18 @@ int main() {
 		// wait for next scheduled loop
 		timer.waitForNextLoop();
 		double time = timer.elapsedTime() - start_time;
-		VectorXd dq_d = VectorXd::Zero(dof);
-		double nu, lu;
-		double Vmax = 0.5;
-		double Omax = 0.1;
-		double kpj = 400; //set kpj
-		double kvj = 80; //set kvj
 		// execute redis read callback
 		redis_client.executeReadCallback(0);
 
 		// update model
 		robot->updateModel();
+
+		/*VectorXd dq_d = VectorXd::Zero(dof);
+		double nu, lu;
+		double Vmax = 0.5;
+		double Omax = 0.1;
+		double kpj = 400; //set kpj
+		double kvj = 80; //set kvj
 		
 		// cout << state <<endl; //for state detection in display
 		dq_d = kpj/kvj*(q_d-robot->_q);// calculate dx_d
@@ -161,42 +207,80 @@ int main() {
 		su(1,1)=nu;
 		su(2,2)=lu;
 
-		command_torques = robot->_M*(-80*(robot->_dq-su*dq_d));
-		// command_torques = -(80*robot->_dq) - 400*(robot->_q - q_init_desired);
+		command_torques = robot->_M*(-80*(robot->_dq-su*dq_d));*/
 
-		/* if (state == POSTURE) {
-			// update task model and set hierarchy
+		if (state == MOVING_DOWN) {
+			// calculate torques to fix the feet 
 			N_prec.setIdentity();
+
+
+			// calculate torques to move right hand
+			posori_task_right_hand->updateTaskModel(N_prec);
+			posori_task_right_hand->computeTorques(posori_task_torques_right_hand);
+
+			// calculate torques to move left hand
+			N_prec = posori_task_right_hand->_N;
+			posori_task_left_hand->updateTaskModel(N_prec);
+			posori_task_left_hand->computeTorques(posori_task_torques_left_hand);
+
+
+			// calculate torques to maintain joint posture
+			N_prec = posori_task_left_hand->_N;
 			joint_task->updateTaskModel(N_prec);
-
-			// compute torques
 			joint_task->computeTorques(joint_task_torques);
-			command_torques = joint_task_torques;
+			// calculate torques 
+			command_torques = posori_task_torques_right_hand + posori_task_torques_left_hand + joint_task_torques;  // gravity compensation handled in sim
+			Vector3d current_x_pos;
+			robot->position(current_x_pos, control_link, control_point);
+			Vector3d diff = current_x_pos - (x_pos + Vector3d(0.0, 0.0, -0.8));
 
-			if ( (robot->_q - q_init_desired).norm() < 0.15 ) {
-				cout << "Posture To Motion" << endl;
-				joint_task->reInitializeTask();
-				posori_task->reInitializeTask();
-				robot->position(ee_pos, control_link, control_point);
-				posori_task->_desired_position = ee_pos - Vector3d(-0.1, -0.1, 0.1);
-				posori_task->_desired_orientation = AngleAxisd(M_PI/6, Vector3d::UnitX()).toRotationMatrix() * posori_task->_desired_orientation;
-				// posori_task->_desired_orientation = AngleAxisd(0.0000000000000001, Vector3d::UnitX()).toRotationMatrix() * posori_task->_desired_orientation;
+			cout<< diff.transpose()<< endl;
 
-				state = MOTION;
+			if (abs(diff(2)) <= 1e-07) {
+				// update model
+				robot->updateModel();
+				robot->position(x_pos, control_link, control_point);
+				robot->rotation(x_ori, control_link);
+				posori_task_right_hand->_desired_position = x_pos + Vector3d(-1, 0.0, 0.0);
+				posori_task_right_hand->_desired_orientation = x_ori;
+				control_link = "link7";
+				robot->position(x_pos, control_link, control_point);
+				robot->rotation(x_ori, control_link);
+				posori_task_left_hand->_desired_position = x_pos + Vector3d(1, 0.0, 0.0);
+				posori_task_left_hand->_desired_orientation = x_ori;
+				q_init_desired = robot->_q;
+				joint_task->_desired_position = q_init_desired;
+				state = SQUEEZE;
+
 			}
-		} else if (state == MOTION) {
-			// update task model and set hierarchy
-			N_prec.setIdentity();
-			posori_task->updateTaskModel(N_prec);
-			N_prec = posori_task->_N;
-			joint_task->updateTaskModel(N_prec);
+		} else {
 
-			// compute torques
-			posori_task->computeTorques(posori_task_torques);
+			// calculate torques to fix the feet 
+			N_prec.setIdentity();
+
+
+			// calculate torques to move right hand
+			posori_task_right_hand->updateTaskModel(N_prec);
+			posori_task_right_hand->computeTorques(posori_task_torques_right_hand);
+
+			// calculate torques to move left hand
+			N_prec = posori_task_right_hand->_N;
+			posori_task_left_hand->updateTaskModel(N_prec);
+			posori_task_left_hand->computeTorques(posori_task_torques_left_hand);
+
+
+			// calculate torques to maintain joint posture
+			N_prec = posori_task_left_hand->_N;
+			joint_task->updateTaskModel(N_prec);
 			joint_task->computeTorques(joint_task_torques);
-			command_torques = posori_task_torques + joint_task_torques;
+			// calculate torques 
+			command_torques = posori_task_torques_right_hand + posori_task_torques_left_hand + joint_task_torques;  // gravity compensation handled in sim
+
 		}
-		*/
+
+		
+		
+		
 
 		// execute redis write callback
 		redis_client.executeWriteCallback(0);	
