@@ -96,6 +96,13 @@
 	            <mesh filename="../../model/test_objects/meshes/visual/cat_v2.obj" />
 	        </geometry>
 	    </visual>
+
+	    <collision>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <geometry>
+                    <box size="0.2 0.2 0.5" />
+                </geometry>
+            </collision>
 	</dynamic_object>
 
 	<light name="light1" type="directional">

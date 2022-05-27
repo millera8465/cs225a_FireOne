@@ -17,12 +17,13 @@
 #include <chrono>
 #include <math.h>  
 
-
 bool fSimulationRunning = false;
 void sighandler(int){fSimulationRunning = false;}
 
 #include "redis_keys.h"
 #include "../include/object.h"
+#include "force_sensor/ForceSensorSim.h"
+#include "force_sensor/ForceSensorDisplay.h"
 
 using namespace std;
 using namespace Eigen;
@@ -142,7 +143,8 @@ int main() {
     sim->setCollisionRestitution(0.0);
 
     // set co-efficient of friction
-    sim->setCoeffFrictionStatic(0.0);
+    sim->setCoeffFrictionStatic(robot_name, "link7", 0.8);
+    sim->setCoeffFrictionStatic(robot_name, "link7r", 0.8);
     sim->setCoeffFrictionDynamic(0.0);
 
 	/*------- Set up visualization -------*/
@@ -182,7 +184,9 @@ int main() {
 	// init redis client values 
 	redis_client.set(CONTROLLER_RUNNING_KEY, "0");  
 	redis_client.setEigenMatrixJSON(JOINT_ANGLES_KEY, robot->_q); 
-	redis_client.setEigenMatrixJSON(JOINT_VELOCITIES_KEY, robot->_dq); 
+        redis_client.setEigenMatrixJSON(JOINT_VELOCITIES_KEY, robot->_dq);
+        const std::string EE_FORCE_KEY = "sai2::cs225a::panda_robot::sensors::force";
+        const std::string EE_MOMENT_KEY = "sai2::cs225a::panda_robot::sensors::moment";
 
 	// start simulation thread
 	thread sim_thread(simulation, robot, sim);
@@ -349,6 +353,11 @@ void simulation(Sai2Model::Sai2Model* robot, Simulation::Sai2Simulation* sim)
 	string controller_status = "0";
 	double kv = 10;  // can be set to 0 if no damping is needed
 
+        // create force sensor
+        ForceSensorSim* force_sensor = new ForceSensorSim(robot_name, "link7", Eigen::Affine3d::Identity(), robot);
+        ForceSensorDisplay* force_display = new ForceSensorDisplay(force_sensor, graphics);
+        Eigen::Vector3d force, moment;
+
 	// setup redis callback
 	redis_client.createReadCallback(0);
 	redis_client.createWriteCallback(0);
@@ -360,6 +369,8 @@ void simulation(Sai2Model::Sai2Model* robot, Simulation::Sai2Simulation* sim)
 	// add to write callback
 	redis_client.addEigenToWriteCallback(0, JOINT_ANGLES_KEY, robot->_q);
 	redis_client.addEigenToWriteCallback(0, JOINT_VELOCITIES_KEY, robot->_dq);
+        redis_client.addEigenToWriteCallback(0, EE_FORCE_KEY, force);
+        redis_client.addEigenToWriteCallback(0, EE_MOMENT_KEY, moment);
 
 	// create a timer
 	LoopTimer timer;
@@ -402,6 +413,14 @@ void simulation(Sai2Model::Sai2Model* robot, Simulation::Sai2Simulation* sim)
 			sim->getObjectPosition(object_names[i], object_pos[i], object_ori[i]);
 			sim->getObjectVelocity(object_names[i], object_lin_vel[i], object_ang_vel[i]);
 		}
+
+                force_sensor->update(sim);
+                force_sensor->getForce(force);
+                force_sensor->getMoment(moment);
+                force_display->update();
+
+                redis_client.setEigenMatrixJSON(EE_FORCE_KEY, force);
+                redis_client.setEigenMatrixJSON(EE_MOMENT_KEY, moment);
 
 		// execute redis write callback
 		redis_client.executeWriteCallback(0);		

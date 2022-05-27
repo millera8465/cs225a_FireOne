@@ -160,9 +160,14 @@
       <visual>
         <origin xyz="0 0 0.15" rpy="0 0 0" />
         <geometry>
-           <sphere radius="0.01"/>
+           <sphere radius="0.05"/>
         </geometry>
       </visual>
+      <collision>
+        <origin xyz="0 0 0.15" rpy="0 0 0" />
+        <geometry>
+           <sphere radius="0.05"/>
+      </collision>
     </link>
      <link name="link1r">
       <inertial>
@@ -285,9 +290,15 @@
       <visual>
         <origin xyz="0 0 0.15" rpy="0 0 0" />
         <geometry>
-           <sphere radius="0.01"/>
+           <sphere radius="0.05"/>
         </geometry>
       </visual>
+      <collision>
+        <origin xyz="0 0 0.15" rpy="0 0 0" />
+        <geometry>
+           <sphere radius="0.05"/>
+        </geometry>
+      </collision>
     </link>
 
    <joint name="floating_base_p1" type="prismatic">

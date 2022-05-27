@@ -23,6 +23,8 @@ void sighandler(int){runloop = false;}
 #define RAD(deg) ((double)(deg) * M_PI / 180.0)
 
 #include "redis_keys.h"
+#include "force_sensor/ForceSensorSim.h"
+#include "force_sensor/ForceSensorDisplay.h"
 
 // Location of URDF files specifying world and robot information
 const string robot_file = "./resources/panda_arm.urdf";
@@ -31,8 +33,9 @@ const string robot_file = "./resources/panda_arm.urdf";
 enum State 
 {
 	APPROACH_CAT = 0, 
-	MOVING_DOWN = 1, 
-	SQUEEZE = 2
+        MOVING_DOWN,
+        SQUEEZE,
+        MOVING_UP
 };
 
 // helper function 
@@ -65,8 +68,13 @@ int main() {
 
 	// load robots, read current state and update the model
 	auto robot = new Sai2Model::Sai2Model(robot_file, false);
+        const std::string EE_FORCE_KEY = "sai2::cs225a::panda_robot::sensors::force";
+        const std::string EE_MOMENT_KEY = "sai2::cs225a::panda_robot::sensors::moment";
+        Eigen::Vector3d force, moment;
 	robot->_q = redis_client.getEigenMatrixJSON(JOINT_ANGLES_KEY);
 	robot->_dq = redis_client.getEigenMatrixJSON(JOINT_VELOCITIES_KEY);
+        force = redis_client.getEigenMatrixJSON(EE_FORCE_KEY);
+        moment = redis_client.getEigenMatrixJSON(EE_MOMENT_KEY);
 	
 	int dof = robot->dof();
 	VectorXd initial_q = VectorXd::Zero(dof);
@@ -80,33 +88,6 @@ int main() {
 	
 	Vector3d x_pos;
 	Matrix3d x_ori;
-
-
-
-	// pose task for left hand
-	/*std::string control_link = "floating_virtual1";
-	Vector3d control_point = Vector3d(0, 0.0, 0.0);
-	auto posori_task_base = new Sai2Primitives::PosOriTask(robot, control_link, control_point);
-	posori_task_base->setDynamicDecouplingFull();
-
-	posori_task_base->_use_interpolation_flag = true;
-	posori_task_base->_use_velocity_saturation_flag = true;
-
-	
-	VectorXd posori_task_torques_base = VectorXd::Zero(dof);
-	posori_task_base->_kp_pos = 200.0;
-	posori_task_base->_kv_pos = 20.0;
-	posori_task_base->_kp_ori = 200.0;
-	posori_task_base->_kv_ori = 20.0;
-
-	// set two goal positions/orientations 
-	robot->positionInWorld(x_pos, control_link, control_point);
-	cout<< "initial pos"<< endl;
-	cout<< x_pos<< endl;
-	robot->rotationInWorld(x_ori, control_link);
-	posori_task_base->_desired_position = x_pos + Vector3d(0, 8.0, 0.0);
-	posori_task_base->_desired_orientation = x_ori; */
-
 
 // pose task for left hand
 	std::string control_link = "link7";
@@ -127,13 +108,9 @@ int main() {
 	// set two goal positions/orientations 
 	robot->position(x_pos, control_link, control_point);
 	robot->rotation(x_ori, control_link);
-	posori_task_left_hand->_desired_position = x_pos + Vector3d(0.0, 0.0, -0.8);
+        posori_task_left_hand->_desired_position = x_pos + Vector3d(0.0, 0.0, -1.11);
 	posori_task_left_hand->_desired_orientation = x_ori; 
 	
-
-
-
-
 // pose task for right hand 
 	control_link = "link7r";
 	auto posori_task_right_hand = new Sai2Primitives::PosOriTask(robot, control_link, control_point);
@@ -155,9 +132,6 @@ int main() {
 	robot->rotation(x_ori, control_link);
 	posori_task_right_hand->_desired_position = x_pos + Vector3d(0.0, 0.0, -0.8);
 	posori_task_right_hand->_desired_orientation = x_ori; 
-
-
-
 
 	// joint task
 	auto joint_task = new Sai2Primitives::JointTask(robot);
@@ -199,6 +173,8 @@ int main() {
 	// add to read callback
 	redis_client.addEigenToReadCallback(0, JOINT_ANGLES_KEY, robot->_q);
 	redis_client.addEigenToReadCallback(0, JOINT_VELOCITIES_KEY, robot->_dq);
+        redis_client.addEigenToReadCallback(0, EE_FORCE_KEY, force);
+        redis_client.addEigenToReadCallback(0, EE_MOMENT_KEY, moment);
 
 	// add to write callback
 	redis_client.addStringToWriteCallback(0, CONTROLLER_RUNNING_KEY, controller_status);
@@ -344,19 +320,19 @@ int main() {
 			robot->position(current_x_pos, control_link, control_point);
 			Vector3d diff = current_x_pos - (x_pos + Vector3d(0.0, 0.0, -0.8));
 
-			cout<< diff.transpose()<< endl;
+                        cout<< diff.transpose()<< endl; // diff might have to end up being the full final desired position in case the arms move laterally and do not get back to their original lateral position by the time we reach our desired height
 
 			if (abs(diff(2)) <= 1e-07) {
 				// update model
 				robot->updateModel();
 				robot->position(x_pos, control_link, control_point);
 				robot->rotation(x_ori, control_link);
-				posori_task_right_hand->_desired_position = x_pos + Vector3d(-0.2, 0.0, 0.0);
+                                posori_task_right_hand->_desired_position = x_pos + Vector3d(-0.8, 0.0, 0.0);
 				posori_task_right_hand->_desired_orientation = x_ori;
 				control_link = "link7";
 				robot->position(x_pos, control_link, control_point);
 				robot->rotation(x_ori, control_link);
-				posori_task_left_hand->_desired_position = x_pos + Vector3d(0.2, 0.0, 0.0);
+                                posori_task_left_hand->_desired_position = x_pos + Vector3d(0.8, 0.0, 0.0);
 				posori_task_left_hand->_desired_orientation = x_ori;
 				q_init_desired = robot->_q;
 				joint_task->_desired_position = q_init_desired;
