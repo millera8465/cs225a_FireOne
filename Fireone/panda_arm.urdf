@@ -50,11 +50,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link1.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link1.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link2">
       <inertial>
@@ -67,11 +67,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link2.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link2.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link3">
       <inertial>
@@ -84,11 +84,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link3.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link3.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link4">
       <inertial>
@@ -101,11 +101,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link4.obj"/>
         </geometry>
       </visual>
-      <collision>
+<!--       <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link4.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link5">
       <inertial>
@@ -118,11 +118,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link5.obj"/>
         </geometry>
       </visual>
-      <collision>
+<!--       <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link5.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link6">
       <inertial>
@@ -135,11 +135,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link6.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link6.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link7">
       <inertial>
@@ -152,11 +152,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link7.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link7.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
       <visual>
         <origin xyz="0 0 0.15" rpy="0 0 0" />
         <geometry>
@@ -175,11 +175,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link1.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link1.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link2r">
       <inertial>
@@ -192,11 +192,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link2.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link2.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link3r">
       <inertial>
@@ -209,11 +209,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link3.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link3.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link4r">
       <inertial>
@@ -226,11 +226,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link4.obj"/>
         </geometry>
       </visual>
-      <collision>
+<!--       <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link4.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link5r">
       <inertial>
@@ -243,11 +243,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link5.obj"/>
         </geometry>
       </visual>
-    <collision>
+<!--       <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link5.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link6r">
       <inertial>
@@ -260,11 +260,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link6.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link6.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
     <link name="link7r">
       <inertial>
@@ -277,11 +277,11 @@
           <mesh filename="../../../model/panda/meshes/visual/link7.obj"/>
         </geometry>
       </visual>
-      <collision>
+      <!-- <collision>
         <geometry>
           <mesh filename="../../../model/panda/meshes/collision/link7.obj"/>
         </geometry>
-      </collision>
+      </collision> -->
       <visual>
         <origin xyz="0 0 0.15" rpy="0 0 0" />
         <geometry>

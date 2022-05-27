@@ -30,8 +30,9 @@ const string robot_file = "./resources/panda_arm.urdf";
 //state machine will be added later
 enum State 
 {
-	MOVING_DOWN = 0, 
-	SQUEEZE
+	APPROACH_CAT = 0, 
+	MOVING_DOWN = 1, 
+	SQUEEZE = 2
 };
 
 // helper function 
@@ -47,12 +48,15 @@ double sat(double x) {
 int main() {
 
 	 // initial state 
-	int state = MOVING_DOWN;
+	int state = APPROACH_CAT;
 	string controller_status = "1";
 	
 	// start redis client
 	auto redis_client = RedisClient();
 	redis_client.connect();
+
+	auto graphics_redis = RedisClient();
+	graphics_redis.connect();
 
 	// set up signal handler
 	signal(SIGABRT, &sighandler);
@@ -76,6 +80,33 @@ int main() {
 	
 	Vector3d x_pos;
 	Matrix3d x_ori;
+
+
+
+	// pose task for left hand
+	/*std::string control_link = "floating_virtual1";
+	Vector3d control_point = Vector3d(0, 0.0, 0.0);
+	auto posori_task_base = new Sai2Primitives::PosOriTask(robot, control_link, control_point);
+	posori_task_base->setDynamicDecouplingFull();
+
+	posori_task_base->_use_interpolation_flag = true;
+	posori_task_base->_use_velocity_saturation_flag = true;
+
+	
+	VectorXd posori_task_torques_base = VectorXd::Zero(dof);
+	posori_task_base->_kp_pos = 200.0;
+	posori_task_base->_kv_pos = 20.0;
+	posori_task_base->_kp_ori = 200.0;
+	posori_task_base->_kv_ori = 20.0;
+
+	// set two goal positions/orientations 
+	robot->positionInWorld(x_pos, control_link, control_point);
+	cout<< "initial pos"<< endl;
+	cout<< x_pos<< endl;
+	robot->rotationInWorld(x_ori, control_link);
+	posori_task_base->_desired_position = x_pos + Vector3d(0, 8.0, 0.0);
+	posori_task_base->_desired_orientation = x_ori; */
+
 
 // pose task for left hand
 	std::string control_link = "link7";
@@ -140,6 +171,9 @@ int main() {
 
 	// set desired joint posture to be the initial robot configuration
 	VectorXd q_init_desired = robot->_q;
+	q_init_desired(0) = 8;
+	q_init_desired(1) = 8;
+	q_init_desired(2) = -0.78539816339;
 	joint_task->_desired_position = q_init_desired;
 
 	// Moving Base 
@@ -209,7 +243,83 @@ int main() {
 
 		command_torques = robot->_M*(-80*(robot->_dq-su*dq_d));*/
 
-		if (state == MOVING_DOWN) {
+		if (state == APPROACH_CAT) {
+			double safeDistance = 0.4;
+			double wallStrength = 0.1;
+			double wallDistance = 0.2;
+
+			robot->positionInWorld(x_pos, control_link, control_point);
+
+			double leftX = x_pos(0) - 0.39;
+			double rightX = x_pos(0) + 0.39;
+			double backY = x_pos(1) - 0.39;
+			double frontY = x_pos(1) + 0.39;
+
+			double leftWall = -5;
+			double rightWall = 5;
+			double backWall = -5;
+			double frontWall = 5;
+
+			double fireStrength = 0.1;
+
+			Vector2d pos_d_x;
+
+			// leftY = leftmost position on robot (i.e. closest to left wall) - should change over time
+			// pos_d_x is position in **world** frame (not relative to base or anything). All controls should be in this frame.
+
+			if (abs(leftX-leftWall) < wallDistance)
+			{
+				pos_d_x(0) += wallStrength*(leftX-leftWall)/pow(leftX-leftWall, 4);
+				pos_d_x(0) -= wallStrength*(leftX-leftWall)/(abs(leftX-leftWall)*pow(wallDistance,3));
+			}
+
+			if (abs(rightX-rightWall) < wallDistance)
+			{
+				pos_d_x(0) += wallStrength*(rightX-rightWall)/pow(rightX-rightWall, 4);
+				pos_d_x(0) -= wallStrength*(rightX-rightWall)/(abs(rightX-rightWall)*pow(wallDistance,3));
+			}
+
+			if (abs(backY-backWall) < wallDistance)
+			{
+				pos_d_x(1) += wallStrength*(backY-backWall)/pow(backY-backWall, 4);
+				pos_d_x(1) -= wallStrength*(backY-backWall)/(abs(backY-backWall)*pow(wallDistance,3));
+			}
+
+			if (abs(frontY-frontWall) < wallDistance)
+			{
+				pos_d_x(1) += wallStrength*(frontY-frontWall)/pow(frontY-frontWall, 4);
+				pos_d_x(1) -= wallStrength*(frontY-frontWall)/(abs(frontY-frontWall)*pow(wallDistance,3));
+			}
+
+
+
+			auto addFire = [&] (double fireX, double fireY, double fireRadius, double strength)
+			{
+				VectorXd x_2d(2), fire(2);
+				x_2d << x_pos(0), x_pos(1);
+				fire << fireX, fireY;
+				double dist = (x_2d-fire).norm();
+				if (dist < safeDistance)
+				{
+					pos_d_x.segment(0,2) += strength*(x_2d-fire)/pow(dist-fireRadius, 4);
+					pos_d_x.segment(0,2) -= strength*(x_2d-fire)/((dist-fireRadius) * pow(safeDistance-fireRadius,3));
+				}
+				cout << "Fire Distance: " << endl;
+				cout << dist << endl;
+
+			};
+
+			MatrixXd firesMatrix = graphics_redis.getEigenMatrixJSON(FIRE_INFO_KEY);
+
+			// radius should always be less than safeDistance
+
+			for (int fireIndex = 0; fireIndex < firesMatrix.rows(); fireIndex++)
+			{
+				//addFire(FireX(fireIndex), FireY(fireIndex), FireRadius((fireIndex), strength(fireIndex));
+				addFire(firesMatrix(fireIndex, 0), firesMatrix(fireIndex, 1), firesMatrix(fireIndex, 3), fireStrength);
+			}
+		}
+		else if (state == MOVING_DOWN) {
 			// calculate torques to fix the feet 
 			N_prec.setIdentity();
 
@@ -241,19 +351,20 @@ int main() {
 				robot->updateModel();
 				robot->position(x_pos, control_link, control_point);
 				robot->rotation(x_ori, control_link);
-				posori_task_right_hand->_desired_position = x_pos + Vector3d(-1, 0.0, 0.0);
+				posori_task_right_hand->_desired_position = x_pos + Vector3d(-0.2, 0.0, 0.0);
 				posori_task_right_hand->_desired_orientation = x_ori;
 				control_link = "link7";
 				robot->position(x_pos, control_link, control_point);
 				robot->rotation(x_ori, control_link);
-				posori_task_left_hand->_desired_position = x_pos + Vector3d(1, 0.0, 0.0);
+				posori_task_left_hand->_desired_position = x_pos + Vector3d(0.2, 0.0, 0.0);
 				posori_task_left_hand->_desired_orientation = x_ori;
 				q_init_desired = robot->_q;
 				joint_task->_desired_position = q_init_desired;
 				state = SQUEEZE;
 
 			}
-		} else {
+			cout<< "MOVING_DOWN"<< endl;
+		} else if (state == SQUEEZE) {
 
 			// calculate torques to fix the feet 
 			N_prec.setIdentity();
@@ -276,6 +387,7 @@ int main() {
 			// calculate torques 
 			command_torques = posori_task_torques_right_hand + posori_task_torques_left_hand + joint_task_torques;  // gravity compensation handled in sim
 
+			cout<< "SQUEEZE"<< endl;
 		}
 
 		
