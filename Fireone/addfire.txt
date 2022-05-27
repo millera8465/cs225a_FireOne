@@ -1,0 +1,53 @@
+safeDistance = 0.4;
+WallStrength = 0.1;
+wallDistance = 0.2;
+
+// leftY = leftmost position on robot (i.e. closest to left wall) - should change over time
+// pos_d_x is position in **world** frame (not relative to base or anything). All controls should be in this frame.
+
+if (abs(leftX-leftWall) < wallDistance)
+{
+	pos_d_x(0) += wallStrength*(leftX-leftWall)/pow(leftX-leftWall, 4);
+	pos_d_x(0) -= wallStrength*(leftX-leftWall)/(abs(leftX-leftWall)*pow(wallDistance,3));
+}
+
+if (abs(rightX-rightWall) < wallDistance)
+{
+	pos_d_x(0) += wallStrength*(rightX-rightWall)/pow(rightX-rightWall, 4);
+	pos_d_x(0) -= wallStrength*(rightX-rightWall)/(abs(rightX-rightWall)*pow(wallDistance,3));
+}
+
+if (abs(backY-backWall) < wallDistance)
+{
+	pos_d_x(1) += wallStrength*(backY-backWall)/pow(backY-backWall, 4);
+	pos_d_x(1) -= wallStrength*(backY-backWall)/(abs(backY-backWall)*pow(wallDistance,3));
+}
+
+if (abs(frontY-topWall) < wallDistance)
+{
+	pos_d_x(1) += wallStrength*(frontY-frontWall)/pow(frontY-frontWall, 4);
+	pos_d_x(1) -= wallStrength*(frontY-frontWall)/(abs(frontY-frontWall)*pow(wallDistance,3));
+}
+
+// radius should always be less than safeDistance
+
+for (int fireIndex = 0; fireIndex < NumFires; fireIndex++)
+{
+	addFire(FireX(fireIndex), FireY(fireIndex), FireRadius((fireIndex), strength(fireIndex));
+}
+
+
+auto addFire(double fireX, double fireY, double fireRadius, double strength)
+{
+	VectorXd x_2d(2), fire(2);
+	x_2d << x(0), x(1);
+	fire << fireX, fireY;
+	dist = (x_2d-fire).norm();
+	if (dist < safeDistance)
+	{
+		pos_d_x(0:1) += strength*(x_2d-fire)/pow(dist-fireRadius, 4);
+		pos_d_x(0:1) -= strength*(x_2d-fire)/((dist-fireRadius) * pow(safeDistance-fireRadius,3));
+	}
+}
+
+
